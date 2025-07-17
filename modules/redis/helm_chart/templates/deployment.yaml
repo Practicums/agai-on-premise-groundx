@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: "{{ .Values.service.name }}"
+  namespace: "{{ .Values.service.namespace }}"
+  labels:
+    app: "{{ .Values.service.name }}"
+spec:
+  serviceName: "{{ .Values.service.name }}"
+  replicas: {{ .Values.replicas.min }}
+  selector:
+    matchLabels:
+      app: "{{ .Values.service.name }}"
+  template:
+    metadata:
+      labels:
+        app: "{{ .Values.service.name }}"
+    spec:
+      nodeSelector:
+        node: "{{ .Values.nodeSelector.node }}"
+      tolerations:
+        - key: "node"
+          value: "{{ .Values.nodeSelector.node }}"
+          effect: "NoSchedule"
+      serviceAccountName: "{{ .Values.service.name }}-sa"
+      containers:
+        - name: "{{ .Values.service.name }}"
+          image: "{{ .Values.image_repo_url }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: "{{ .Values.image.pull }}"
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          securityContext:
+            runAsUser: {{ .Values.securityContext.runAsUser }}
+            runAsGroup: {{ .Values.securityContext.runAsGroup }}
+            fsGroup: {{ .Values.securityContext.fsGroup }}
+          resources:
+            limits:
+              cpu: "{{ .Values.resources.limits.cpu }}"
+              memory: "{{ .Values.resources.limits.memory }}"
+            requests:
+              cpu: "{{ .Values.resources.requests.cpu }}"
+              memory: "{{ .Values.resources.requests.memory }}"
+          volumeMounts:
+            - name: "{{ .Values.service.name }}-persistent-storage"
+              mountPath: "{{ .Values.persistence.mountPath }}"
+      volumes:
+        - name: "{{ .Values.service.name }}-persistent-storage"
+          emptyDir: {}

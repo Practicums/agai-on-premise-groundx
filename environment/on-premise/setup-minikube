@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+minikube start \
+    --driver docker --container-runtime docker --gpus all \
+    --nodes 6 --cpus 8 --memory 30000 --disk-size 100g \
+    --kubernetes-version v1.29 -p groundx
+
+minikube addons enable storage-provisioner-rancher -p groundx
+
+kubectl label nodes groundx-m02 node=eyelevel-cpu-memory
+kubectl label nodes groundx-m03 node=eyelevel-cpu-only
+kubectl label nodes groundx-m04 node=eyelevel-gpu-layout
+kubectl label nodes groundx-m05 node=eyelevel-gpu-ranker
+kubectl label nodes groundx-m06 node=eyelevel-gpu-summary
+
+# set context for later
+kubectl config set-context --current --namespace=eyelevel
+
+# install nvidia gpu operator:
+helm repo add nvidia https://helm.ngc.nvidia.com/nvidia \
+    && helm repo update
+
+helm install --wait --generate-name \
+     -n gpu-operator --create-namespace \
+     nvidia/gpu-operator \
+     --version=v25.3.1 \
+     --set driver.enabled=false \
+     --set toolkit.enabled=false

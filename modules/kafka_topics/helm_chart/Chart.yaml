@@ -1,0 +1,5 @@
+apiVersion: v2
+name: "kafka_topics"
+description: "A Helm chart for kafka topics"
+version: 0.0.1
+appVersion: "0.0.1"

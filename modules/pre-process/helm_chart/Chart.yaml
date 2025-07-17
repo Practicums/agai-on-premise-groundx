@@ -1,0 +1,5 @@
+apiVersion: v2
+name: pre-process
+description: "A Helm chart for pre-process"
+version: 0.0.1
+appVersion: 0.0.1

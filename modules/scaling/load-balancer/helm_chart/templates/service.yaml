@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.target }}
+  annotations:
+    {{- if .Values.timeout }}
+    service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "{{ .Values.timeout }}"
+    {{- end }}
+    {{- if .Values.internal }}
+    service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+    {{- end }}
+spec:
+  selector:
+    app: {{ .Values.target }}
+  ports:
+    - protocol: TCP
+      port: {{ .Values.port }}
+      targetPort: 8080
+  type: LoadBalancer

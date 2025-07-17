@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+BIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+. "$BIN_DIR/shared/util"
+
+ENV_BASE="$BIN_DIR/../environment"
+
+terraform -chdir="$ENV_BASE/estimate" destroy --auto-approve > /dev/null 2>&1
+terraform -chdir="$ENV_BASE/estimate" init -upgrade > /dev/null 2>&1
+terraform -chdir="$ENV_BASE/estimate" apply -auto-approve > /dev/null 2>&1
+terraform -chdir="$ENV_BASE/estimate" output -json replicas > "$BIN_DIR/../out/replicas.json" 2>/dev/null
+
+python bin/estimate.py

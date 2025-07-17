@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+BIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+. "$BIN_DIR/shared/util"
+
+find $BIN_DIR/../ -type f -name ".DS_Store" -delete
+
+rm_types=(".terraform" ".terraform.lock.hcl" "terraform.tfstate" "terraform.tfstate.backup" ".terraform.tfstate.lock.info" "shared_variables.tf" "common.tf" "variables.tf" "env.auto.tfvars" "helm_release.tf" "locals.tf" "node_assignments.tf" "openshift.tf" "shared_common.tf" "not-openshift.tf" "versions.tf")
+
+rm -rf "$BIN_DIR/../.git"
+rm -rf "$BIN_DIR/../_tls.crt"
+rm -rf "$BIN_DIR/../_tls.key"
+rm -rf "$BIN_DIR/../ca.crt"
+rm -rf "$BIN_DIR/../gcv_credentials.json"
+rm -rf "$BIN_DIR/../out"
+rm -rf "$BIN_DIR/../tf_output.log"
+
+for (( idx=${#valid_envs[@]}-1 ; idx>=0 ; idx-- )) ; do
+    if [[ "${valid_envs[$idx]}" == "aws" ]]; then
+        for (( jdx=${#valid_aws[@]}-1 ; jdx>=0 ; jdx-- )) ; do
+            cdir=${valid_aws[$jdx]}
+            if [[ "$cdir" == "aws-vpc" ]]; then
+                cdir="vpc"
+            fi
+            for (( kdx=${#rm_types[@]}-1 ; kdx>=0 ; kdx-- )) ; do
+                rm -rf "$BIN_DIR/../environment/${valid_envs[$idx]}/$cdir/${rm_types[$kdx]}"
+            done
+        done
+    fi
+    rm -rf "$BIN_DIR/../environment/${valid_envs[$idx]}/env.tfvars"
+done
+
+for (( kdx=${#rm_types[@]}-1 ; kdx>=0 ; kdx-- )) ; do
+    rm -rf "$BIN_DIR/../environment/estimate/${rm_types[$kdx]}"
+done
+
+for (( idx=${#valid_groups[@]}-1 ; idx>=0 ; idx-- )) ; do
+    if [[ "${valid_groups[$idx]}" == "init" ]]; then
+        for (( jdx=${#valid_init[@]}-1 ; jdx>=0 ; jdx-- )) ; do
+            for (( kdx=${#rm_types[@]}-1 ; kdx>=0 ; kdx-- )) ; do
+                rm -rf "$BIN_DIR/../operator/${valid_groups[$idx]}/${valid_init[$jdx]}/${rm_types[$kdx]}"
+            done
+        done
+    elif [[ "${valid_groups[$idx]}" == "services" ]]; then
+        for (( jdx=${#valid_services[@]}-1 ; jdx>=0 ; jdx-- )) ; do
+            for (( kdx=${#rm_types[@]}-1 ; kdx>=0 ; kdx-- )) ; do
+                rm -rf "$BIN_DIR/../operator/${valid_groups[$idx]}/${valid_services[$jdx]}/${rm_types[$kdx]}"
+            done
+        done
+    elif [[ "${valid_groups[$idx]}" == "app" ]]; then
+        for (( jdx=${#valid_apps[@]}-1 ; jdx>=0 ; jdx-- )) ; do
+            for (( kdx=${#rm_types[@]}-1 ; kdx>=0 ; kdx-- )) ; do
+                rm -rf "$BIN_DIR/../operator/${valid_groups[$idx]}/${valid_apps[$jdx]}/${rm_types[$kdx]}"
+            done
+        done
+    fi
+done
+rm -rf "$BIN_DIR/../operator/env.tfvars"

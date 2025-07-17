@@ -1,0 +1,72 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  labels:
+    app: {{ .Values.service.name }}
+  name: "{{ .Values.service.name }}-cluster"
+  namespace: {{ .Values.service.namespace }}
+spec:
+  kafka:
+    version: {{ .Values.service.version }}
+    replicas: {{ .Values.service.replicas }}
+    listeners:
+      - name: plain
+        port: {{ .Values.service.port }}
+        type: internal
+        tls: false
+    config:
+      default.replication.factor: {{ .Values.zookeeper.replicas }}
+      offsets.topic.replication.factor: {{ .Values.service.replicas }}
+      transaction.state.log.replication.factor: {{ .Values.service.replicas }}
+      transaction.state.log.min.isr: 2
+      log.message.format.version: {{ .Values.service.version }}
+    resources:
+      requests:
+        memory: {{ .Values.resources.requests.memory }}
+        cpu: {{ .Values.resources.requests.cpu }}
+      limits:
+        memory: {{ .Values.resources.limits.memory }}
+        cpu: {{ .Values.resources.limits.cpu }}
+    template:
+      pod:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                  - key: node
+                    operator: In
+                    values:
+                    - "{{ .Values.nodeSelector.node }}"
+        tolerations:
+          - key: "node"
+            value: "{{ .Values.nodeSelector.node }}"
+            effect: "NoSchedule"
+    storage:
+      type: persistent-claim
+      size: {{ .Values.service.storage.size }}
+      deleteClaim: false
+  zookeeper:
+    replicas: {{ .Values.zookeeper.replicas }}
+    template:
+      pod:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                  - key: node
+                    operator: In
+                    values:
+                    - "{{ .Values.nodeSelector.node }}"
+        tolerations:
+          - key: "node"
+            value: "{{ .Values.nodeSelector.node }}"
+            effect: "NoSchedule"
+    storage:
+      type: persistent-claim
+      size: {{ .Values.zookeeper.storage.size }}
+      deleteClaim: false
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}

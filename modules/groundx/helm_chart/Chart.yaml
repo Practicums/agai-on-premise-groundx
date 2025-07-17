@@ -1,0 +1,5 @@
+apiVersion: v2
+name: groundx
+description: "A Helm chart for groundx"
+version: 0.0.1
+appVersion: 0.0.1

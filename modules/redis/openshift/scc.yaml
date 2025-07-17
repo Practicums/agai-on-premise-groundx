@@ -1,0 +1,23 @@
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: redis-enterprise-scc-v2
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    app.kubernetes.io/managed-by: Helm
+allowedCapabilities:
+  - SYS_RESOURCE
+allowPrivilegeEscalation: false
+runAsUser:
+  type: MustRunAs
+  uid: 1000660000
+fsGroup:
+  type: MustRunAs
+  ranges:
+    - min: 1000660000
+      max: 1000660000
+seLinuxContext:
+  type: MustRunAs
+supplementalGroups:
+  type: RunAsAny

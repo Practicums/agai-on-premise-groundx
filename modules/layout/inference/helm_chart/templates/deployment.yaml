@@ -1,0 +1,145 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.service.name }}
+  namespace: {{ .Values.service.namespace }}
+  labels:
+    app: {{ .Values.service.name }}
+spec:
+  replicas: {{ .Values.replicas.min }}
+  selector:
+    matchLabels:
+      app: {{ .Values.service.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.service.name }}
+    spec:
+      nodeSelector:
+        node: "{{ .Values.nodeSelector.node }}"
+      tolerations:
+        - key: "node"
+          value: "{{ .Values.nodeSelector.node }}"
+          effect: "NoSchedule"
+      initContainers:
+        - name: wait-for-cache
+          image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
+          imagePullPolicy: "{{ .Values.busybox.pull }}"
+          command: ['sh', '-c', "until nc -z {{ .Values.dependencies.cache }}; do echo waiting for cache; sleep 2; done"]
+        - name: wait-for-file-storage
+          image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
+          imagePullPolicy: "{{ .Values.busybox.pull }}"
+          command: ['sh', '-c', "until nc -z {{ .Values.dependencies.file }}; do echo waiting for file storage; sleep 2; done"]
+        {{- if .Values.createSymlink }}
+        - name: create-symlink
+          image: {{ .Values.busybox.repository }}:{{ .Values.busybox.tag }}
+          imagePullPolicy: "{{ .Values.busybox.pull }}"
+          command: ["/bin/sh", "-c", "--"]
+          args: ["echo 'Running ldconfig_symlink.sh on this node'; /scripts/ldconfig_symlink.sh"]
+          securityContext:
+            privileged: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 50Mi
+          volumeMounts:
+            - name: {{ .Values.service.name }}
+              mountPath: /scripts/ldconfig_symlink.sh
+              subPath: ldconfig_symlink.sh
+            - name: host-sbin
+              mountPath: /host-sbin
+            - name: host-usr-sbin
+              mountPath: /host-usr-sbin
+            - name: host-bin
+              mountPath: /host-bin
+            - name: host-usr-bin
+              mountPath: /host-usr-bin
+        {{- end }}
+      containers:
+        - name: {{ .Values.service.name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: "{{ .Values.image.pull }}"
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          workingDir: /app
+          command:
+            - /bin/sh
+            - -c
+            - |
+              export PYTHONPATH=/app && python /app/init-layout.py && supervisord -c /app/supervisord.conf
+          securityContext:
+            runAsUser: {{ .Values.securityContext.runAsUser }}
+          livenessProbe:
+            httpGet:
+              path: /alive
+              port: 8080
+            initialDelaySeconds: 30
+            failureThreshold: 8
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 90
+            failureThreshold: 20
+            periodSeconds: 15
+          {{- if .Values.local }}
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+          {{- else }}
+          resources:
+            limits:
+              cpu: "{{ .Values.resources.limits.cpu }}"
+              memory: "{{ .Values.resources.limits.memory }}"
+              nvidia.com/gpu: 1
+            requests:
+              cpu: "{{ .Values.resources.requests.cpu }}"
+              memory: "{{ .Values.resources.requests.memory }}"
+              nvidia.com/gpu: 1
+          {{- end }}
+          volumeMounts:
+            - name: config-models
+              mountPath: /app/config_models.py
+              subPath: config_models.py
+            - name: config-volume
+              mountPath: /app/config.py
+              subPath: config.py
+            - name: supervisord-volume
+              mountPath: /app/supervisord.conf
+              subPath: supervisord.conf
+      volumes:
+        - name: config-models
+          configMap:
+            name: config-models-map
+        - name: config-volume
+          configMap:
+            name: layout-config-py-map
+        - name: supervisord-volume
+          configMap:
+            name: layout-inference-supervisord-16gb-conf-map
+        {{- if .Values.createSymlink }}
+        - name: {{ .Values.service.name }}
+          configMap:
+            name: ldconfig-symlink-map
+            defaultMode: 0555
+        - name: host-sbin
+          hostPath:
+            path: /sbin
+            type: Directory
+        - name: host-usr-sbin
+          hostPath:
+            path: /usr/sbin
+            type: Directory
+        - name: host-bin
+          hostPath:
+            path: /bin
+            type: Directory
+        - name: host-usr-bin
+          hostPath:
+            path: /usr/bin
+            type: Directory
+        {{- end }}

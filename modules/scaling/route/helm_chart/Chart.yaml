@@ -1,0 +1,5 @@
+apiVersion: v2
+name: route
+description: "A Helm chart for an OpenShift route"
+version: 0.0.1
+appVersion: 0.0.1

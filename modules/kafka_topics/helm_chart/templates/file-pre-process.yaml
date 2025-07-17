@@ -1,0 +1,13 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{ .Values.topics.pre_process }}
+  labels:
+    strimzi.io/cluster: "{{ .Values.service.name }}-cluster"
+spec:
+  partitions: {{ .Values.partitions.pre_process }}
+  replicas: {{ .Values.service.replicas }}
+  config:
+    retention.ms: 7200000
+    retention.bytes: {{ .Values.service.retention_bytes }}
+    segment.bytes: {{ .Values.service.segment_bytes }}
