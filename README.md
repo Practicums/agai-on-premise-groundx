@@ -1,16 +1,16 @@
 # Running GroundX on Minikube
 
 ## GroundX On-Prem Original Repo
-Reference the original repo for information about the service:
+Reference the original repo for additional information about the service:
 https://github.com/eyelevelai/groundx-on-prem
 
 ## Dependencies
 
 GroundX On-Prem requires Kubernetes cluster `v1.18+`. This script uses `v1.29`. Versions higher than that will not work as they don't support the way Kafka is deployed for GroundX.
 
-This script also requires Minikube and Docker. Minikube needs to be configured to access the Nvidia GPUs through this method: https://minikube.sigs.k8s.io/docs/tutorials/nvidia/
+This script also requires Minikube and Docker. Minikube needs to be configured to access the Nvidia GPUs through this [method](https://minikube.sigs.k8s.io/docs/tutorials/nvidia/). This will also walk you through installing the Nvidia Container Toolkit.
 
-If using WSL, make sure that the Nvidia driver installed on your device is Version 560+. Versions below this may encounter errors when python scripts attempt to access GPUs.
+Also make sure to install the Nvidia Drivers. If using WSL, make sure that the Nvidia Driver installed on your device is Version 560+. Versions below this may encounter errors when python scripts attempt to access GPUs.
 
 Please ensure you also have the following software tools installed before proceeding:
 
@@ -26,9 +26,25 @@ Run the provided script to create the cluster, label the nodes, and install the 
 environment/on-premise/setup-minikube
 ```
 
+If Minikube encounters errors while creating the docker containers, it may be due to this [issue](https://kind.sigs.k8s.io/docs/user/known-issues/#pod-errors-due-to-too-many-open-files).
+
+Try running the below commands to fix it:
+```bash
+sudo sysctl fs.inotify.max_user_watches=524288
+sudo sysctl fs.inotify.max_user_instances=512
+```
+
 ## Deploy GroundX On-Prem to the Cluster
 
-1. Create `operator/env.tfvars`.
+1. Create env.tfvars file
+
+```bash
+cp operator/env.tfvars.example-openshift operator/env.tfvars
+```
+
+In the new env.tfvars file, change `cluster.type` from `"openshift"` to `"minikube"`.
+
+2. Add admin credentials
 
 For security reasons, you **MUST** modify the following,
 
@@ -36,7 +52,7 @@ For security reasons, you **MUST** modify the following,
 - `admin.username`: Set this to a random UUID. You can generate one by running `bin/uuid`. This will be the user ID associated with the admin account and will be used for inter-service communications.
 - `admin.email`: Set this to the email address you want associated with the admin account.
 
-Additional configurations can be found in the original repo: https://github.com/eyelevelai/groundx-on-prem/blob/main/README.md#create-envtfvars-file
+Additional information about the configuration file can be found in the original [repo](https://github.com/eyelevelai/groundx-on-prem/blob/main/README.md#create-envtfvars-file).
 
 2. Run the setup script
 
@@ -54,4 +70,10 @@ To tear down the GroundX On-Prem deployment, run the following commands in order
 bin/operator app -c
 bin/operator services -c
 bin/operator init -c
+```
+
+If you want to tear down the Minikube cluster, run:
+
+```bash
+minikube delete -p groundx
 ```
