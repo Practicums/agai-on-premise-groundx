@@ -38,11 +38,11 @@ sudo sysctl fs.inotify.max_user_watches=524288
 sudo sysctl fs.inotify.max_user_instances=512
 ```
 
-2. Actives the Local Path Provisioner plugin for Minikube.
+2. Activates the Local Path Provisioner plugin for Minikube.
 
 Dynamic Persistent Volume (PV) provisioning is not enabled by default for multi-node clusters. As such, any PVs created will only mount to the control plane node regardless of where the requesting pod is deployed and thus be inaccessible. This plugin fixes this issue by dynamically provisioning and mounting the volumes to the correct nodes.
 
-**Note:** this plugin only supports Persistent Volume Claims (PVCs) with access modes of `ReadWriteOnce`, so all PVCs were modified to use said access mode.
+**Note:** this plugin only supports Persistent Volume Claims (PVCs) with access modes of `ReadWriteOnce`. All PVCs were modified from the original repo to use said access mode.
 
 3. Labels each node to match the five node groups.
 
@@ -50,9 +50,9 @@ This step is important since each pod in GroundX is deployed using a node select
 
 4. Sets the kubectl context to the eyelevel namespace.
 
-This makes it so you don't have to specify the namespace every time when uses kubectl commands on the GroundX deployment, since kubectl intially uses the default namespace.
+This step is mainly for convenience, so you don't have to specify the namespace every time when uses kubectl commands on the GroundX deployment, since kubectl intially uses the default namespace.
 
-5. Install the Nvidia gpu-operator.
+5. Installs the Nvidia gpu-operator.
 
 The gpu-operator creates important resources in the cluster that certain pods need for deployment.
 
@@ -60,7 +60,7 @@ The gpu-operator creates important resources in the cluster that certain pods ne
 
 ## Deploy GroundX On-Prem to the Cluster
 
-1. Create env.tfvars file
+1. Create env.tfvars file.
 
 ```bash
 cp operator/env.tfvars.example-openshift operator/env.tfvars
@@ -68,7 +68,7 @@ cp operator/env.tfvars.example-openshift operator/env.tfvars
 
 In the new env.tfvars file, change `cluster.type` from `"openshift"` to `"minikube"`.
 
-2. Add admin credentials
+2. Add admin credentials.
 
 For security reasons, you **MUST** modify the following,
 
@@ -78,28 +78,48 @@ For security reasons, you **MUST** modify the following,
 
 Additional information about the configuration file can be found in the original [repo](https://github.com/eyelevelai/groundx-on-prem/blob/main/README.md#create-envtfvars-file).
 
-3. Start a Minikube tunnel
+3. Start a Minikube tunnel in a new terminal.
 
 ```bash
 minikube tunnel -p groundx
 ```
 
-You will need to keep the terminal open for the tunnel to function. Minikube uses this tunnel to assign external ips to the service's Load Balancers.
-Since you running this locally, the external ips will be `localhost` or `127.0.0.1` plus the assigned port.
+You will need to keep the terminal open for the tunnel to function, meaning the setup script will need to be run in a separate terminal. Minikube uses this tunnel to assign external ips to the service's Load Balancers.
+Since you running this locally, the external ips will be `localhost` or `127.0.0.1` plus the assigned port. Only a single tunnel is required for all load balancers in the cluster. 
 
-Two load balancers will be deployed for this services:
+Two load balancers will be deployed:
 
-- The first one is for Minio, so the user can access files stored locally in the cluster. This one uses the privileged port of `80` by default, which might require you to provide a sudo password in the terminal. There doesn't seem to be a way to change this port value prior to deployment, but if you want to change it after deployment you can follow these [steps](https://github.com/minio/wiki/wiki/How-to-change-the-minio-port-in-k8s).
+- The first one is for Minio, so the user can access files stored locally in the cluster. This one uses the privileged port `80` by default, which might require you to provide a sudo password in the terminal. There doesn't seem to be a way to change this port value prior to deployment, but if you want to change it after deployment you can follow these [steps](https://github.com/minio/wiki/wiki/How-to-change-the-minio-port-in-k8s).
 
 - The second one is for GroundX to access its API. This one uses port `8080` by default, which should not require user input. If you wish to change this port, you can modify it in the file `operator/variables.tf` under `groundx.loadbalancer.port`. 
 
-4. Run the setup script
+4. Run the setup script.
 
 ```bash
 operator/setup
 ```
 
 After the script is completed, it should display the ip and port you can use to access the GroundX API. By default, this should be `http://127.0.0.1:80/api`.
+
+## Stopping/Restarting the cluster
+
+You can stop the cluster using:
+
+```bash
+minikube stop -p groundx
+```
+
+and start it again using:
+
+```bash
+minikube start -p groundx
+```
+
+**Note:** When restarting the cluster, the layout-inference pod might fail and report an error due to "unhealthy gpus."
+This is likely because the pod directly claims a gpu through kuberenetes, but it takes some time for the node to detect available gpus upon restart.
+
+The deployment will detect the failure and start another pod to replace it.
+If the replacement reaches a ready state, it means everything is functioning as normal, and the original, failed pod can be deleted.
 
 ## Tearing Down
 
