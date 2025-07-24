@@ -10,7 +10,7 @@ GroundX On-Prem requires Kubernetes cluster `v1.18+`. This script uses `v1.29`. 
 
 This script also requires Minikube and Docker. Minikube needs to be configured to access the Nvidia GPUs through this [method](https://minikube.sigs.k8s.io/docs/tutorials/nvidia/). This will also walk you through installing the Nvidia Container Toolkit.
 
-Also make sure to install the Nvidia Drivers. If using WSL, make sure that the Nvidia Driver installed on your device is Version 560+. Versions below this may encounter errors when python scripts attempt to access GPUs.
+Also make sure to install the Nvidia Drivers. If using WSL, make sure that the Nvidia Driver installed on your device is Version `560+`. Versions below this may encounter errors when python scripts attempt to access GPUs.
 
 Please ensure you also have the following software tools installed before proceeding:
 
@@ -26,6 +26,10 @@ Run the provided script to create the cluster, label the nodes, and install the 
 environment/on-premise/setup-minikube
 ```
 
+The script performs the following steps:
+
+1. Starts Minikube using docker containers with GPU access and the required CPU, memory, and disk size requirements. Six nodes are started: One control plane and five worker nodes.
+
 If Minikube encounters errors while creating the docker containers, it may be due to this [issue](https://kind.sigs.k8s.io/docs/user/known-issues/#pod-errors-due-to-too-many-open-files).
 
 Try running the below commands to fix it:
@@ -33,6 +37,26 @@ Try running the below commands to fix it:
 sudo sysctl fs.inotify.max_user_watches=524288
 sudo sysctl fs.inotify.max_user_instances=512
 ```
+
+2. Actives the Local Path Provisioner plugin for Minikube.
+
+Dynamic Persistent Volume (PV) provisioning is not enabled by default for multi-node clusters. As such, any PVs created will only mount to the control plane node regardless of where the requesting pod is deployed and thus be inaccessible. This plugin fixes this issue by dynamically provisioning and mounting the volumes to the correct nodes.
+
+**Note:** this plugin only supports Persistent Volume Claims (PVCs) with access modes of `ReadWriteOnce`, so all PVCs were modified to use said access mode.
+
+3. Labels each node to match the five node groups.
+
+This step is important since each pod in GroundX is deployed using a node selector that searches for these labels.
+
+4. Sets the kubectl context to the eyelevel namespace.
+
+This makes it so you don't have to specify the namespace every time when uses kubectl commands on the GroundX deployment, since kubectl intially uses the default namespace.
+
+5. Install the Nvidia gpu-operator.
+
+The gpu-operator creates important resources in the cluster that certain pods need for deployment.
+
+**Note:** The gpu-operator has difficulty identifying GPUs in a WSL environment. However, configuring docker to have GPU access and installing the Nvidia driver and container toolkit enables GPU jobs to run on our cluster despite this issue. The gpu-operator is still needed for its other functions, though.
 
 ## Deploy GroundX On-Prem to the Cluster
 
@@ -54,11 +78,28 @@ For security reasons, you **MUST** modify the following,
 
 Additional information about the configuration file can be found in the original [repo](https://github.com/eyelevelai/groundx-on-prem/blob/main/README.md#create-envtfvars-file).
 
-2. Run the setup script
+3. Start a Minikube tunnel
+
+```bash
+minikube tunnel -p groundx
+```
+
+You will need to keep the terminal open for the tunnel to function. Minikube uses this tunnel to assign external ips to the service's Load Balancers.
+Since you running this locally, the external ips will be `localhost` or `127.0.0.1` plus the assigned port.
+
+Two load balancers will be deployed for this services:
+
+- The first one is for Minio, so the user can access files stored locally in the cluster. This one uses the privileged port of `80` by default, which might require you to provide a sudo password in the terminal. There doesn't seem to be a way to change this port value prior to deployment, but if you want to change it after deployment you can follow these [steps](https://github.com/minio/wiki/wiki/How-to-change-the-minio-port-in-k8s).
+
+- The second one is for GroundX to access its API. This one uses port `8080` by default, which should not require user input. If you wish to change this port, you can modify it in the file `operator/variables.tf` under `groundx.loadbalancer.port`. 
+
+4. Run the setup script
 
 ```bash
 operator/setup
 ```
+
+After the script is completed, it should display the ip and port you can use to access the GroundX API. By default, this should be `http://127.0.0.1:80/api`.
 
 ## Tearing Down
 
