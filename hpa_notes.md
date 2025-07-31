@@ -36,3 +36,14 @@ You can additionally edit the HPA to scale based on various [other metrics](http
 ## Testing the HPA functionality
 
 We can use the groundx backend's [locust tests](https://github.com/Practicums/agai-eyelevel-backend?tab=readme-ov-file#testing) to send traffic to the groundx endpoint.
+
+![locust test screen](./doc/locust.png)
+
+After the traffic ramps up, we see that the increased requests creates a cpu load on the groundx service, which is detected by the HPA. This causes it to scale up to two replicas.
+
+![hpa scale up](./doc/hpa.png)
+
+We see that after the scale up, the load balancer is able to distribute later requests to both groundx pods (as seen by their cpu utilization).
+
+![load balancing to both pods](./doc/groundx_replicas.png)
+![closer look at cpu](./doc/cpu_utilization.png)
