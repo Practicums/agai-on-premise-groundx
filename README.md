@@ -1,8 +1,7 @@
 # Running GroundX on Minikube
 
 ## GroundX On-Prem Original Repo
-Reference the original repo for additional information about the service:
-https://github.com/eyelevelai/groundx-on-prem
+This repository was built based on this version of GroundX: [https://github.com/eyelevelai/groundx-on-prem with commit ID: 59148d0](https://github.com/eyelevelai/groundx-on-prem/commit/59148d04455f6ff4ce79d96d90bab45f12f8ce7c)
 
 ## Dependencies
 
