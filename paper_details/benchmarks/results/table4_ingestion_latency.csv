@@ -1,0 +1,4 @@
+scenario,cloud_seconds,onprem_seconds
+1 document,33,44
+2 documents (parallel),34,52
+10 documents (parallel),38,261

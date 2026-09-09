@@ -1,0 +1,5 @@
+scenario,requests,median_ms,p99_ms,avg_ms,rps,failures
+Cloud 20 users,2076,570,1100,583.87,35.2,0
+On-premises 20 users,2091,480,850,501.85,41.2,0
+Cloud 50 users,2055,1900,3800,1905.84,26.6,0
+On-premises 50 users,2061,1700,3400,1695.85,29.9,0

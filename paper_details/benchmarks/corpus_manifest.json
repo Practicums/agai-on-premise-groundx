@@ -1,0 +1,19 @@
+{
+  "description": "Small documented multimodal corpus for the varied-ingestion experiment named as future work in Section 5.4. Replaces the single reused single-page PDF (Reviewers 1, 2, 3). Place the actual files in ./corpus/ using the filenames below, then run repeat_ingest.py with distinct documents instead of the cyclic reuse. Each entry states what dimension of ingestion load it exercises.",
+  "documents": [
+    {"file": "text_1page.pdf",       "modality": "text",        "pages": 1,   "notes": "baseline, matches the original paper corpus"},
+    {"file": "text_10page.pdf",      "modality": "text",        "pages": 10,  "notes": "text-heavy, larger page count"},
+    {"file": "text_50page.pdf",      "modality": "text",        "pages": 50,  "notes": "long document, indexing and chunking load"},
+    {"file": "image_heavy_10page.pdf","modality": "image+text", "pages": 10,  "notes": "embedded figures, exercises the vision path"},
+    {"file": "scanned_10page.pdf",   "modality": "scanned",     "pages": 10,  "notes": "OCR path, no embedded text layer"},
+    {"file": "table_heavy_10page.pdf","modality": "tabular",    "pages": 10,  "notes": "dense tables, layout parsing load"},
+    {"file": "mixed_20page.pdf",     "modality": "mixed",       "pages": 20,  "notes": "text, images, and tables interleaved"}
+  ],
+  "protocol": {
+    "warmup_runs": 2,
+    "timed_reps_per_condition": 10,
+    "conditions": "per-document (isolate modality effect) and parallel batches of 1, 2, 10 (isolate concurrency effect)",
+    "report": "mean, standard deviation, 95% confidence interval per condition; Mann-Whitney U between cloud and on-premises per condition; full per-run latencies in the CSV",
+    "note": "Author to populate ./corpus/ with real documents that match these descriptions. The manifest is a specification, not the documents themselves."
+  }
+}

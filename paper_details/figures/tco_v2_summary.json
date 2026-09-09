@@ -1,0 +1,122 @@
+{
+ "power_base": 60.84,
+ "rec_base": 310.84,
+ "be_base": 4.24,
+ "be_compute_only": 3.73,
+ "rec_low": 19.01,
+ "rec_high": 1080.4,
+ "be_low": 3.75,
+ "be_high": 6.42,
+ "scenarios": [
+  [
+   "Compute only (original comparison)",
+   0.0,
+   3.7
+  ],
+  [
+   "All parameters favorable",
+   19.0,
+   3.8
+  ],
+  [
+   "Baseline",
+   310.8,
+   4.2
+  ],
+  [
+   "Baseline with heavy administration (500 USD/mo)",
+   660.8,
+   5.0
+  ],
+  [
+   "Baseline with expensive electricity (0.25 USD/kWh)",
+   367.0,
+   4.3
+  ],
+  [
+   "All parameters adverse",
+   1080.4,
+   6.4
+  ],
+  [
+   "Baseline plus one full hardware replacement (failure risk)",
+   310.8,
+   8.5
+  ]
+ ],
+ "tornado": [
+  [
+   "Admin overhead (0 to 500 $/mo)",
+   3.97,
+   5.01,
+   1.04
+  ],
+  [
+   "Network/backup/security (0 to 150 $/mo)",
+   4.14,
+   4.43,
+   0.29
+  ],
+  [
+   "Space/power protection (0 to 100 $/mo)",
+   4.19,
+   4.38,
+   0.19
+  ],
+  [
+   "Maintenance/support (0 to 100 $/mo)",
+   4.19,
+   4.38,
+   0.19
+  ],
+  [
+   "Electricity price (0.08 to 0.25 $/kWh)",
+   4.19,
+   4.34,
+   0.15
+  ],
+  [
+   "Avg system power (0.3 to 0.8 kW)",
+   4.19,
+   4.31,
+   0.11
+  ],
+  [
+   "PUE (cooling overhead) (1.1 to 1.6 x)",
+   4.22,
+   4.26,
+   0.04
+  ]
+ ],
+ "mc_percentiles": {
+  "p5": 4.16,
+  "p10": 4.22,
+  "p25": 4.33,
+  "p50": 4.48,
+  "p75": 4.68,
+  "p90": 4.87,
+  "p95": 4.98
+ },
+ "mc_p_le_5": 0.9559,
+ "mc_p_le_6": 1.0,
+ "mc_p_le_7": 1.0,
+ "mc_mean": 4.52,
+ "amortized": {
+  "base": 144.0,
+  "worst": 266.67,
+  "best": 100.0
+ },
+ "monthly_equiv": {
+  "base": 454.84,
+  "worst": 1347.07,
+  "best": 119.01
+ },
+ "cumulative": {
+  "cloud36": 92768.04,
+  "cloud60": 154613.4,
+  "onp36": 20790.24,
+  "onp60": 36890.4,
+  "onp36_adv": 58094.4,
+  "onp60_adv": 84024.0
+ }
+}
